@@ -13,16 +13,14 @@
 #include "taskshare.h"
 
 extern Share<bool> cam_share;
-extern Share<bool> DC_share;
-extern Share<bool> stepper_share;
-extern Share<bool> ir_share;
+extern Share<bool> motors_share;
 
 
-// A share which holds a counter of how many times a simulated event occurred
-extern Share<bool> begin_recording;
+// // A share which holds a counter of how many times a simulated event occurred
+// extern Share<bool> begin_recording;
 
-// A queue which triggers a task to print the count at certain times
-extern Queue<uint16_t> data_queue;
+// // A queue which triggers a task to print the count at certain times
+// extern Queue<uint16_t> data_queue;
 
 #endif // _SHARES_H_
 
