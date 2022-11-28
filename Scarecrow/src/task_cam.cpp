@@ -2,6 +2,7 @@
 #include <PrintStream.h>
 #include "shares.h"
 #include "task_cam.h"
+#include <esp_camera.h>
 
 /** @brief 
  *  @param   p_params An unused pointer to nonexistent parameters
@@ -19,7 +20,7 @@ void task_cam (void* p_params)
         {
             if (cam_share.get()) //if cam_share is true, the esp32cam needs to take a picture
             {
-
+                Serial.print("Cam should take a picture now");
                 //
                 //code here on taking the picture and storing it locally to a micro sd
                 //

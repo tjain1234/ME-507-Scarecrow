@@ -42,7 +42,7 @@ void task_ir (void* p_params)
     for (;;)
     {
         amg.readPixels(pixels); //IR cam scans regardless of state
-
+        
         // Scarecrow is searching. Stepper motor is on (panning back and forth __slowly__)
         if (state == 0)
         {
@@ -51,6 +51,7 @@ void task_ir (void* p_params)
                 validate++;
                 if (validate > 10)  //Heat detected for 1 second, so assume it is life and needs to be scared.
                 {
+                    Serial.print("1 second of heat > 30C");
                     cam_share.put(true);        //Tells cam task to take a picture
                     motors_share.put(false);    //Tells motors task to turn off stepper motor and turn on DC motor
                     state = 1;
@@ -68,6 +69,7 @@ void task_ir (void* p_params)
                 if (validate > 30)  //No heat detected for 3 seconds, so assume life has been scared
                 {
                     //cam_share is put to false inside the cam_task. Should not be done here.
+                    Serial.print("3 seconds of no heat > 30C");
                     motors_share.put(true);    //Tells motors task to turn on stepper motor and turn off DC motor
                     state = 0;
                     validate = 0;

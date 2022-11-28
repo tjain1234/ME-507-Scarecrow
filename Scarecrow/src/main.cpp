@@ -14,10 +14,13 @@
 #include "task_ir.h"
 #include "task_cam.h"
 #include "task_motors.h"
+#include <Stepper.h>
 
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_AMG88xx.h>
+
+#include <esp_camera.h>
 
 // #define I2C_SDA 21                               // This block is IR cam stuff
 // #define I2C_SCL 22
