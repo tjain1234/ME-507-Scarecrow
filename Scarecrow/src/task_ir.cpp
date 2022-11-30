@@ -13,10 +13,7 @@
 void task_ir (void* p_params)
 {
     uint8_t state = 0;
-    // uint8_t counter = 0;
     uint8_t validate = 0;
-
-
 
     #define I2C_SDA 21                               // This block is IR cam stuff
     #define I2C_SCL 22
@@ -38,7 +35,6 @@ void task_ir (void* p_params)
 
 
 
-
     for (;;)
     {
         amg.readPixels(pixels); //IR cam scans regardless of state
@@ -53,6 +49,9 @@ void task_ir (void* p_params)
                 {
                     Serial.print("1 second of heat > 30C");
                     cam_share.put(true);        //Tells cam task to take a picture
+                    camphoto_share.put(true);
+                    //on web say photo was taken
+                    
                     motors_share.put(false);    //Tells motors task to turn off stepper motor and turn on DC motor
                     state = 1;
                     validate = 0;
@@ -77,21 +76,6 @@ void task_ir (void* p_params)
             }
         }
 
-        vTaskDelay (100);
+        vTaskDelay (250);
     }
 }
-
-
-        // // In state 1 data is being taken until the number of points per set
-        // // have been put into the queue
-        // else if (state == 2)
-        // {
-        //     // Read one data point and immediately stuff it into the queue
-        //     data_queue.put (analogRead (DATA_ACQ_PIN));
-
-        //     // Check if we've taken the required number of data points yet
-        //     if (++counter > POINTS_PER_SET)
-        //     {
-        //         state = 0;
-        //     }
-        // }

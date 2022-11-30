@@ -14,6 +14,7 @@
 
 extern Share<bool> cam_share;
 extern Share<bool> motors_share;
+extern Share<bool> camphoto_share;
 
 
 // // A share which holds a counter of how many times a simulated event occurred
