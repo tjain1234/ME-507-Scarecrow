@@ -47,7 +47,7 @@ void task_ir (void* p_params)
                 validate++;
                 if (validate > 10)  //Heat detected for 1 second, so assume it is life and needs to be scared.
                 {
-                    Serial.print("1 second of heat > 30C");
+                    Serial.print("1 second of heat > 30C\n");
                     cam_share.put(true);        //Tells cam task to take a picture
                     camphoto_share.put(true);
                     //on web say photo was taken
@@ -68,7 +68,7 @@ void task_ir (void* p_params)
                 if (validate > 30)  //No heat detected for 3 seconds, so assume life has been scared
                 {
                     //cam_share is put to false inside the cam_task. Should not be done here.
-                    Serial.print("3 seconds of no heat > 30C");
+                    Serial.print("3 seconds of no heat > 30C\n");
                     motors_share.put(true);    //Tells motors task to turn on stepper motor and turn off DC motor
                     state = 0;
                     validate = 0;

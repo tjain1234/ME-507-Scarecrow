@@ -73,7 +73,7 @@ void task_motors (void* p_params)
             }
             else
             {
-                Serial.print("DC motor should be on and Stepper motor should be off");
+                Serial.print("DC motor should be on and Stepper motor should be off\n");
                 state = 1;
             }
         }
@@ -83,12 +83,11 @@ void task_motors (void* p_params)
         {
             if (motors_share.get()) //if stepper_share is true, the stepper motor needs to pan back and forth (state 0)
             {
-                Serial.print("DC motor should be off and Stepper motor should be on patrol");
+                Serial.print("DC motor should be off and Stepper motor should be on patrol\n");
                 state = 0;
             }
             else
             {
-                Serial.print("should write pins to move motor here \n");
                 //DC motor spins (PCB)
                 // digitalWrite(dc_AIN2, HIGH);
                 // digitalWrite(dc_AIN1, LOW); 
