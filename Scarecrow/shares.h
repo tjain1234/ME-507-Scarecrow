@@ -3,7 +3,7 @@
  *  in more than one file of the scarecrow project.
  * 
  *  @author Ethan Nikcevich
- *  @date   11/13/2022
+ *  @date   11/27/2022
  */
 
 #ifndef _SHARES_H_
@@ -15,13 +15,6 @@
 extern Share<bool> cam_share;
 extern Share<bool> motors_share;
 extern Share<bool> camphoto_share;
-
-
-// // A share which holds a counter of how many times a simulated event occurred
-// extern Share<bool> begin_recording;
-
-// // A queue which triggers a task to print the count at certain times
-// extern Queue<uint16_t> data_queue;
 
 #endif // _SHARES_H_
 

@@ -1,13 +1,15 @@
 /** @file   main.cpp
+ *  This file sets up the web server, and creates the task structure used to control the scarecrow.
  *  
  *  @author Ethan Nikcevich
  *  @author Miles Ibarra
  *  @author Tim Jain
  *  @author JR Ridgely
+ *  @author A. Sinha
  *  
  *  @date   2022-Mar-28 Original web stuff by Sinha
  *  @date   2022-Nov-04 Modified for ME507 use by Ridgely
- *  @date   11/9/2022 Everything else by Nikcevich
+ *  @date   11/27/2022 Further modified for Scarecrow use by Nikcevich
  *  @copyright 2022 by the authors, released under the MIT License.
  */
 
@@ -17,16 +19,16 @@
 #include "taskshare.h"         // Header for inter-task shared data
 #include "taskqueue.h"         // Header for inter-task data queues
 #include "shares.h"            // Header for shares used in this project
-#include "task_ir.h"
-#include "task_cam.h"
-#include "task_motors.h"
-#include <Stepper.h>
+#include "task_ir.h"           // Header for IR task
+#include "task_cam.h"          // Header for cam task
+#include "task_motors.h"       // Header for motors task
+#include <Stepper.h>           // Header for Arduino stepper driver
 
 #include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_AMG88xx.h>
+#include <Adafruit_AMG88xx.h>  // Header for Adafruit IR sensor
 
-#include <esp_camera.h>
+#include <esp_camera.h>        // Header for Espressif ESP Cam
 
 /////////////////
 /////////////////
@@ -106,7 +108,7 @@ void setup_wifi (void)
 /** @brief   Put a web page header into an HTML string. 
  *  @details This header may be modified if the developer wants some actual
  *           @a style for her or his web page. It is intended to be a common
- *           header (and stylle) for each of the pages served by this server.
+ *           header (and style) for each of the pages served by this server.
  *  @param   a_string A reference to a string to which the header is added; the
  *           string must have been created in each function that calls this one
  *  @param   page_title The title of the page
@@ -141,9 +143,7 @@ void handle_DocumentRoot ()
     HTML_header (a_str, "Scarecrow Web Server");
     a_str += "<body>\n<div id=\"webpage\">\n";
     a_str += "<h1>Scarecrow Control Center</h1>\n";
-   // a_str += "...or is it Main Test Page?\n";
     a_str += "<p><p> <a href=\"/toggle\">Wave Hello</a>\n";
-    a_str += "<p><p> <a href=\"/csv\">Show the IR pixel array</a>\n";
     a_str += "<p><p> <a href=\"/cam\">See when a photo is taken</a>\n";
     a_str += "</div>\n</body>\n</html>\n";
 
@@ -159,6 +159,9 @@ void handle_NotFound (void)
     server.send (404, "text/plain", "Not found");
 }
 
+/**
+ * @brief   Tell the user whether a photo has been taken since last checked.
+ */
 void handle_camprint (void)
 {
   if(camphoto_share.get())
@@ -173,21 +176,13 @@ void handle_camprint (void)
 }
 
 
-/** @brief   Toggle blue LED when called by the web server.
- *  @details For testing purposes, this function turns the little blue LED on a
- *           38-pin ESP32 board on and off. It is called when someone enters
- *           @c http://server.address/toggle as the web address request from a
- *           browser.
+/** @brief   Toggle the DC motor to wave the arms when called by the web server.
  */
 void handle_Toggle_DC (void)
 {
-    // This variable must be declared static so that its value isn't forgotten
-    // each time this function runs. BUG: It takes two requests to the toggle
-    // page before the LED turns on, after which it toggles as expected.
-
-    digitalWrite (DCPin, HIGH);
-    delay(200);
-    digitalWrite (DCPin, LOW);
+    digitalWrite (DCPin, HIGH);  //Turn on the motor
+    delay(2000);                 //Wave for 2 seconds
+    digitalWrite (DCPin, LOW);   //Turn off the motor
 
     String toggle_page = "<!DOCTYPE html> <html> <head>\n";
     toggle_page += "<meta http-equiv=\"refresh\" content=\"1; url='/'\" />\n";
@@ -198,30 +193,6 @@ void handle_Toggle_DC (void)
 }
 
 
-/** @brief   Show some simulated data when asked by the web server.
- *  @details The contrived data is sent in a relatively efficient Comma
- *           Separated Variable (CSV) format which is easily read by Matlab(tm)
- *           and Python and spreadsheets.
- */
-void handle_CSV (void)
-{
-    // The page will be composed in an Arduino String object, then sent.
-    // The first line will be column headers so we know what the data is
-    String csv_str = "IR Camera Pixel Values in Celcius\n";
-
-    // Create some fake data and put it into a String object. We could just
-    // as easily have taken values from a data array, if such an array existed
-    for (uint8_t index = 0; index < 20; index++)
-    {
-        csv_str += index;
-        csv_str += ",";
-        csv_str += String (sin (index / 5.4321), 3);       // 3 decimal places
-        csv_str += "\n";
-    }
-
-    // Send the CSV file as plain text so it can be easily saved as a file
-    server.send (404, "text/plain", csv_str);
-}
 
 /** @brief   Task which sets up and runs a web server.
  *  @details After setup, function @c handleClient() must be run periodically
@@ -237,7 +208,6 @@ void task_webserver (void* p_params)
     // the page handling functions referenced below need access to the server
     server.on ("/", handle_DocumentRoot);
     server.on ("/toggle", handle_Toggle_DC);
-    server.on ("/csv", handle_CSV);
     server.on ("/cam", handle_camprint);
     server.onNotFound (handle_NotFound);
 
@@ -249,7 +219,7 @@ void task_webserver (void* p_params)
     {
         // The web server must be periodically run to watch for page requests
         server.handleClient ();
-        vTaskDelay (500);
+        vTaskDelay (500);  //Period of 500 ms
     }
 }
 
@@ -257,6 +227,7 @@ void task_webserver (void* p_params)
 ////////////
 ////////////
 
+// Shares used for task communication
 Share<bool> camphoto_share ("camphoto");
 Share<bool> cam_share ("cam");
 Share<bool> motors_share ("motors");
@@ -281,14 +252,17 @@ void setup()
   // Create the tasks
   // Task which runs the web server. It runs at a low priority
   xTaskCreate (task_webserver, "Web Server", 8192, NULL, 2, NULL);
-
+  // Task which runs the IR sensor. High priority
   xTaskCreate (task_ir, "ir", 2048, NULL, 10, NULL);
+  // Task which controls the motors
   xTaskCreate (task_motors, "stepper", 2048, NULL, 7, NULL);
+  // Task which communicates with the ESP32 CAM
   xTaskCreate (task_cam, "cam", 4096, NULL, 5, NULL);
 
-   
+  //Initial values of shares for task communication
   motors_share.put(true);
   cam_share.put(false);
+  camphoto_share.put(false);
 
 }
 

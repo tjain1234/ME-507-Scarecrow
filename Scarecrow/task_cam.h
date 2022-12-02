@@ -1,7 +1,7 @@
 /** @file    task_cam.h
  *  This file defines the cam task for taking a picture of the heat source.
  *  @author  Ethan Nikcevich
- *  @date    11/13/2022
+ *  @date    11/27/2022
  */
 
 #include "Arduino.h"

@@ -1,3 +1,16 @@
+/** @file   main.cpp
+ *  This file controls the ESP32 Cam to take a photo when told by the separate ESP32 Board.
+ *  
+ *  @author Rui Santos
+ *  @author Ethan Nikcevich
+ *  @author Miles Ibarra
+ *  @author Tim Jain
+ * 
+ *  @date   11/27/2022 Further modified for Scarecrow use by Nikcevich
+ *  @copyright 2022 by the authors
+ */
+
+
 /*********
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp32-cam-take-photo-save-microsd-card
@@ -44,18 +57,23 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
+//Pin to detect ESP32 telling Cam to take a photo
 #define input_pin         12
 
-int pictureNumber = 0;
+int pictureNumber = 0; //Goes up by 1 each time a picture is taken, attached to end of each png file name.
 
+/** @brief   Sets up the ESP32 Cam to prepare for taking a photo when told.
+ */
 void setup() {
+
+  //pin used to detect ESP32 telling Cam to take a photo
   pinMode(input_pin, INPUT);
+
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
  
   Serial.begin(115200);
-  //Serial.setDebugOutput(true);
-  //Serial.println();
   
+  //ESP32 Cam Settings
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -78,6 +96,7 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG; 
   
+  //Settings for if the camera has PSRAM
   if(psramFound()){
     config.frame_size = FRAMESIZE_UXGA; // FRAMESIZE_ + QVGA|CIF|VGA|SVGA|XGA|SXGA|UXGA
     config.jpeg_quality = 10;
@@ -95,23 +114,20 @@ void setup() {
     return;
   }
   
-  //Serial.println("Starting SD Card");
+  // Init the microSD card
   if(!SD_MMC.begin()){
     Serial.println("SD Card Mount Failed");
     return;
   }
-  
   uint8_t cardType = SD_MMC.cardType();
   if(cardType == CARD_NONE){
     Serial.println("No SD Card attached");
     return;
   }
-    
-
-  
-  
 }
 
+/** @brief   takes a photo when told by the separate ESP32 Board.
+ */
 void loop() {
   if (digitalRead(input_pin))
   {
